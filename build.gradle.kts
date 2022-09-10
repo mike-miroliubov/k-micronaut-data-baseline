@@ -16,11 +16,11 @@ repositories {
 
 dependencies {
     kapt("io.micronaut.data:micronaut-data-processor")
-
-    // WTF?
+    kapt("io.micronaut.serde:micronaut-serde-processor")
     kapt("io.micronaut:micronaut-http-validation")
+
     implementation("io.micronaut:micronaut-http-client")
-    implementation("io.micronaut:micronaut-jackson-databind")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
     implementation("jakarta.annotation:jakarta.annotation-api")
     implementation("io.micronaut:micronaut-validation")
 
@@ -41,8 +41,15 @@ dependencies {
 
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
 
+    testImplementation("org.assertj:assertj-core:3.23.1")
 }
 
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute(module("io.micronaut:micronaut-jackson-databind"))
+            .using(module("io.micronaut.serde:micronaut-serde-jackson:1.3.2"))
+    }
+}
 
 application {
     mainClass.set("org.kite.baseline.bookshelf.ApplicationKt")
