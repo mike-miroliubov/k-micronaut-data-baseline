@@ -38,14 +38,25 @@ dependencies {
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     runtimeOnly("com.h2database:h2")
 
-    runtimeOnly("org.apache.logging.log4j:log4j-api:2.18.0")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
+    runtimeOnly("ch.qos.logback:logback-classic")
 
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     testImplementation("org.assertj:assertj-core:3.23.1")
     testImplementation("org.mockito:mockito-junit-jupiter:4.9.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
+}
+
+// Auto-discovery doesn't work for me in IDEA for some reason. Manually configure the GraavVM 17 CE
+graalvmNative {
+    binaries {
+        named("main") {
+            javaLauncher.set(javaToolchains.launcherFor {
+                languageVersion.set(JavaLanguageVersion.of(17))
+                vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+            })
+        }
+    }
 }
 
 configurations.all {
@@ -85,6 +96,9 @@ tasks {
     check {
         finalizedBy("integrationTest")
     }
+//    nativeBuild {
+//
+//    }
 }
 graalvmNative.toolchainDetection.set(false)
 micronaut {

@@ -40,8 +40,4 @@ open class BookService(
     }
 
     fun getBook(id: Long): Book = bookRepository.findById(id).orElseThrow { NotFoundException("Book with id '$id' not found") }
-
-    open fun updateBook(book: Book) {
-
-    }
 }
