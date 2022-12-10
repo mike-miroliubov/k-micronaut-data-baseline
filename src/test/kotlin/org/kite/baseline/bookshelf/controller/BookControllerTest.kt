@@ -1,42 +1,54 @@
 package org.kite.baseline.bookshelf.controller
 
-import io.micronaut.core.type.Argument
 import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.kite.baseline.bookshelf.dto.BookCreateDto
-import org.kite.baseline.bookshelf.model.Author
 import org.kite.baseline.bookshelf.model.Book
-import org.kite.baseline.bookshelf.repository.AuthorRepository
 import org.kite.baseline.bookshelf.service.BookService
+import org.mockito.kotlin.mock
 
-@MicronautTest
-internal class BookControllerTest {
-    @Inject
-    lateinit var bookService: BookService
-
-    @Inject
-    lateinit var authorRepository: AuthorRepository
-
+@MicronautTest(packages = ["org.kite.baseline.bookshelf.controller"])
+class BookControllerTest {
     @Inject
     @field:Client("/")
     lateinit var client: HttpClient
 
+    @MockBean(BookService::class)
+    fun mockBookService() = BookService(mock(), mock())
+
     @Test
-    fun `should retrieve books for prefix` () {
+    internal fun `should return 404 when no book found`() {
         // given
-        val author = authorRepository.save(Author(null, "test"))
-        bookService.createBook(BookCreateDto("test", author.id!!, 42))
+        val randomBookId = 42
 
-        // when
-        val books = client.toBlocking().retrieve(HttpRequest.GET<Any>("/books"), Argument.listOf(Book::class.java))
-
-        // then
-        assertThat(books).hasSize(1)
+        // when-then
+        assertThatThrownBy { client.toBlocking().retrieve(HttpRequest.GET<Any>("/books/$randomBookId")) }
+            .isExactlyInstanceOf(HttpClientResponseException::class.java)
+            .matches(hasHttpStatus(HttpStatus.NOT_FOUND))
+            .hasMessage("Book with id '42' not found")
     }
+
+    @Test
+    internal fun `should return 400 when creating book for non-existing author`() {
+        // given
+        val book = BookCreateDto("Book with no author", 42, 111)
+
+        // when-then
+        assertThatThrownBy { client.toBlocking().retrieve(HttpRequest.POST("/books", book), Book::class.java) }
+            .isExactlyInstanceOf(HttpClientResponseException::class.java)
+            .matches(hasHttpStatus(HttpStatus.BAD_REQUEST))
+            .hasMessage("Author with ID 42 not found")
+    }
+
+    private fun hasHttpStatus(httpStatus: HttpStatus): (Throwable) -> Boolean =
+        { e -> e is HttpClientResponseException && e.status == httpStatus }
 
 }

@@ -8,7 +8,7 @@ import org.kite.baseline.bookshelf.model.Author
 import org.kite.baseline.bookshelf.model.Book
 
 @MicronautTest
-internal class BookRepositoryTest {
+internal class BookRepositoryIT {
     @Inject
     lateinit var authorRepository: AuthorRepository
 
